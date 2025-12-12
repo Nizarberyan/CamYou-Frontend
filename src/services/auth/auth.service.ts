@@ -5,7 +5,9 @@ import type {
   RegisterRequest,
   RegisterResponse,
   LogoutResponse,
+  User,
 } from "../../types/auth.types";
+
 
 const authService = {
   login: async (loginRequest: LoginRequest) => {
@@ -21,6 +23,10 @@ const authService = {
   },
   logout: async () => {
     const response = await api.post<LogoutResponse>("/auth/logout");
+    return response.data;
+  },
+  getMe: async () => {
+    const response = await api.get<User>("/auth/me");
     return response.data;
   },
 };

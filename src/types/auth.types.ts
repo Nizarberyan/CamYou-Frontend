@@ -1,10 +1,10 @@
 interface LoginResponse {
   message: string;
   token: string;
-  data: {
+  user: {
     name: string;
     email: string;
-    role: "user" | "admin" | "driver";
+    role?: "user" | "admin" | "driver";
     status: "active" | "inactive";
     profileImage?: string;
     _id: string;
@@ -21,16 +21,14 @@ interface RegisterRequest {
   name: string;
   email: string;
   password: string;
-  role: "user" | "admin" | "driver";
-  profileImage?: string;
 }
 interface RegisterResponse {
   message: string;
   token: string;
-  data: {
+  user: {
     name: string;
     email: string;
-    role: "user" | "admin" | "driver";
+    role?: "user" | "admin" | "driver";
     status: "active" | "inactive";
     profileImage?: string;
     _id: string;
@@ -42,10 +40,22 @@ interface RegisterResponse {
 interface LogoutResponse {
   message: string;
 }
+interface User {
+  _id: string;
+  name: string;
+  email: string;
+  role?: "user" | "admin" | "driver";
+  status: "active" | "inactive";
+  profileImage?: string;
+  createdAt: string;
+  updatedAt: string;
+  __v: number;
+}
 export type {
   LoginResponse,
   LoginRequest,
   RegisterRequest,
   RegisterResponse,
   LogoutResponse,
+  User,
 };
