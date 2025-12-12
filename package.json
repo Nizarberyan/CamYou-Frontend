@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "bun --hot src/index.tsx",
     "start": "NODE_ENV=production bun src/index.tsx",
-    "build": "bun run build.ts"
+    "build": "bun run build.ts",
+    "format": "prettier --write .",
+    "lint": "eslint src/**/*.{js,jsx,ts,tsx}"
   },
   "dependencies": {
     "@radix-ui/react-label": "^2.1.7",
@@ -27,8 +29,10 @@
     "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
+    "@types/bun": "latest",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@types/bun": "latest"
+    "eslint": "^9.39.1",
+    "prettier": "^3.7.4"
   }
 }
