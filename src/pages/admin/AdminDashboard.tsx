@@ -13,6 +13,8 @@ import {
   Activity,
   Wrench,
   FileText,
+  Container,
+  Disc,
 } from "lucide-react";
 import type { Trip } from "@/types/trip.types";
 
@@ -34,7 +36,7 @@ export default function AdminDashboard() {
         const [tripsData, driversData, trucksData] = await Promise.all([
           apiMethods.getTrips(),
           apiMethods.getDrivers(),
-          apiMethods.getTrucks(),
+          apiMethods.trucks.getAll(),
         ]);
 
         // Calculate Stats
@@ -93,6 +95,21 @@ export default function AdminDashboard() {
           <Button variant="outline" asChild>
             <Link to="/admin/maintenance">
               <Wrench className="mr-2 h-4 w-4" /> Maintenance
+            </Link>
+          </Button>
+          <Button variant="outline" asChild>
+            <Link to="/admin/trucks">
+              <Truck className="mr-2 h-4 w-4" /> Trucks
+            </Link>
+          </Button>
+          <Button variant="outline" asChild>
+            <Link to="/admin/trailers">
+              <Container className="mr-2 h-4 w-4" /> Trailers
+            </Link>
+          </Button>
+          <Button variant="outline" asChild>
+            <Link to="/admin/tires">
+              <Disc className="mr-2 h-4 w-4" /> Tires
             </Link>
           </Button>
           <Button variant="outline" asChild>
