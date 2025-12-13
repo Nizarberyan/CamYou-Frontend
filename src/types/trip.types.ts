@@ -20,6 +20,14 @@ interface Trip {
   estimatedDistance?: number;
   actualDistance?: number;
   notes?: string;
+  expenses?: {
+    _id?: string;
+    type: string;
+    amount: number;
+    description: string;
+    date: string;
+    receiptUrl?: string;
+  }[];
   createdAt: string;
   updatedAt: string;
 }

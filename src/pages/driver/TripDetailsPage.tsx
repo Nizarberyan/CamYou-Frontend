@@ -13,12 +13,23 @@ import {
   Clock,
   Navigation,
   User,
+  ClipboardCheck,
 } from "lucide-react";
 import type { Trip } from "@/types/trip.types";
 import type { Truck as TruckType } from "@/types/truck.types";
 import type { Trailer as TrailerType } from "@/types/trailer.types";
 import TripCompletionModal from "../../components/driver/TripCompletionModal";
+import InspectionModal from "../../components/driver/InspectionModal";
 import { MapPreview } from "@/components/common/MapPreview";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function TripDetailsPage() {
   const { id } = useParams<{ id: string }>();
@@ -29,6 +40,35 @@ export default function TripDetailsPage() {
   // Action States
   const [actionLoading, setActionLoading] = useState(false);
   const [isCompletionModalOpen, setIsCompletionModalOpen] = useState(false);
+  const [isInspectionModalOpen, setIsInspectionModalOpen] = useState(false);
+  const [showExpenseForm, setShowExpenseForm] = useState(false);
+  const [newExpense, setNewExpense] = useState({
+    type: "fuel",
+    amount: 0,
+    description: "",
+    date: new Date().toISOString(),
+  });
+
+  const handleAddExpense = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!trip) return;
+    try {
+      setActionLoading(true);
+      const updatedTrip = await apiMethods.addTripExpense(trip._id, newExpense);
+      setTrip(updatedTrip);
+      setShowExpenseForm(false);
+      setNewExpense({
+        type: "fuel",
+        amount: 0,
+        description: "",
+        date: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error("Failed to add expense", error);
+    } finally {
+      setActionLoading(false);
+    }
+  };
 
   useEffect(() => {
     const fetchTrip = async () => {
@@ -136,14 +176,24 @@ export default function TripDetailsPage() {
               })}
             </div>
           </div>
-          <Button
-            onClick={handleDownloadPDF}
-            disabled={downloading}
-            className="w-full md:w-auto"
-          >
-            <FileText className="mr-2 h-4 w-4" />
-            {downloading ? "Downloading..." : "Download Work Order"}
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+            <Button
+              variant="outline"
+              onClick={() => setIsInspectionModalOpen(true)}
+              className="w-full md:w-auto"
+            >
+              <ClipboardCheck className="mr-2 h-4 w-4" />
+              Log Inspection
+            </Button>
+            <Button
+              onClick={handleDownloadPDF}
+              disabled={downloading}
+              className="w-full md:w-auto"
+            >
+              <FileText className="mr-2 h-4 w-4" />
+              {downloading ? "Downloading..." : "Download Work Order"}
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -176,7 +226,10 @@ export default function TripDetailsPage() {
 
           {/* Map Preview */}
           <div className="md:col-span-2">
-            <MapPreview origin={trip.startLocation} destination={trip.endLocation} />
+            <MapPreview
+              origin={trip.startLocation}
+              destination={trip.endLocation}
+            />
           </div>
         </CardContent>
       </Card>
@@ -256,6 +309,120 @@ export default function TripDetailsPage() {
         </Card>
       </div>
 
+      {/* Expenses Section */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="flex items-center gap-2 text-base">
+            💰 Trip Expenses
+          </CardTitle>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowExpenseForm(!showExpenseForm)}
+          >
+            {showExpenseForm ? "Cancel" : "Add Expense"}
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {showExpenseForm && (
+            <form
+              onSubmit={handleAddExpense}
+              className="mb-6 p-4 border rounded-md bg-muted/40 space-y-4"
+            >
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Type</Label>
+                  <Select
+                    onValueChange={(v) =>
+                      setNewExpense({ ...newExpense, type: v })
+                    }
+                    value={newExpense.type}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="fuel">Fuel</SelectItem>
+                      <SelectItem value="tolls">Tolls</SelectItem>
+                      <SelectItem value="maintenance">
+                        Emergency Maintenance
+                      </SelectItem>
+                      <SelectItem value="parking">Parking</SelectItem>
+                      <SelectItem value="food">Meals</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Amount ($)</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    required
+                    value={newExpense.amount}
+                    onChange={(e) =>
+                      setNewExpense({
+                        ...newExpense,
+                        amount: parseFloat(e.target.value),
+                      })
+                    }
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Description</Label>
+                <Input
+                  placeholder="Receipt # or details..."
+                  value={newExpense.description}
+                  onChange={(e) =>
+                    setNewExpense({
+                      ...newExpense,
+                      description: e.target.value,
+                    })
+                  }
+                />
+              </div>
+              <Button type="submit" disabled={actionLoading}>
+                {actionLoading ? "Saving..." : "Save Expense"}
+              </Button>
+            </form>
+          )}
+
+          <div className="space-y-2">
+            {trip.expenses && trip.expenses.length > 0 ? (
+              trip.expenses.map((expense, idx) => (
+                <div
+                  key={idx}
+                  className="flex justify-between items-center p-3 border rounded-md bg-card"
+                >
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`p-2 rounded-full ${expense.type === "fuel" ? "bg-yellow-100 text-yellow-700" : "bg-gray-100 text-gray-700"}`}
+                    >
+                      {expense.type === "fuel" ? "⛽" : "💵"}
+                    </div>
+                    <div>
+                      <p className="font-medium capitalize">{expense.type}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {expense.description} -{" "}
+                        {new Date(expense.date).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
+                  <span className="font-bold text-lg">
+                    ${expense.amount.toFixed(2)}
+                  </span>
+                </div>
+              ))
+            ) : (
+              <p className="text-muted-foreground text-center py-4">
+                No expenses recorded.
+              </p>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Actions Footer */}
       {!["completed", "cancelled"].includes(trip.status) && (
         <div className="flex flex-col sm:flex-row gap-4 pt-4 border-t">
@@ -305,6 +472,18 @@ export default function TripDetailsPage() {
         onConfirm={(data) => handleStatusUpdate("completed", data)}
         loading={actionLoading}
       />
+
+      {trip && (
+        <InspectionModal
+          isOpen={isInspectionModalOpen}
+          onClose={() => setIsInspectionModalOpen(false)}
+          truckId={truck?._id || ""}
+          truckPlate={truck?.licensePlate || "Unknown"}
+          trailerId={trailer?._id}
+          trailerPlate={trailer?.licensePlate}
+          onSuccess={() => { /* maybe refresh trip or show toast */ }}
+        />
+      )}
     </div>
   );
 }

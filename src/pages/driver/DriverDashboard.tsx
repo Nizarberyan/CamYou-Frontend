@@ -1,9 +1,11 @@
+import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useAppSelector } from "@/store/hooks";
 import tripService from "@/services/trip/trip.service";
 import type { Trip } from "@/types/trip.types";
 import { TripList } from "@/components/driver/TripList";
 import { User } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export default function DriverDashboard() {
   const { user } = useAppSelector((state) => state.auth);
@@ -46,6 +48,33 @@ export default function DriverDashboard() {
           <span className="text-sm font-medium capitalize">
             {user?.role} Account
           </span>
+        </div>
+      </div>
+
+      {/* Driver Profile Card */}
+      <div className="grid md:grid-cols-3 gap-6">
+        <div className="md:col-span-3">
+          <div className="bg-card border rounded-lg p-6 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
+            <div className="flex items-center gap-4">
+              <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
+                <User className="h-8 w-8 text-primary" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold">{user?.name}</h3>
+                <p className="text-sm text-muted-foreground">{user?.email}</p>
+                <div className="mt-1 flex items-center gap-2">
+                  <span className="text-xs bg-muted px-2 py-0.5 rounded text-muted-foreground uppercase tracking-wider font-medium">
+                    {user?.role}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <Link to="/profile">
+              <Button variant="outline">
+                Edit Profile
+              </Button>
+            </Link>
+          </div>
         </div>
       </div>
 
