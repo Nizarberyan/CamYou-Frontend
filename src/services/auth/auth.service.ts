@@ -8,7 +8,6 @@ import type {
   User,
 } from "../../types/auth.types";
 
-
 const authService = {
   login: async (loginRequest: LoginRequest) => {
     const response = await api.post<LoginResponse>("/auth/login", loginRequest);

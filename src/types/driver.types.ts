@@ -4,7 +4,7 @@ import type { MessageResponse } from "./common.types";
 export type Driver = User;
 
 export interface DriverResponse {
-    driver: Driver;
+  driver: Driver;
 }
 
 export type CreateDriverResponse = Driver;
