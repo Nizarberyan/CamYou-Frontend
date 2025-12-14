@@ -26,6 +26,7 @@ interface DailyReport {
   totalFuel: number;
   activeTrips: number;
   completedTrips: number;
+  totalExpenses: number;
   createdAt: string;
 }
 
@@ -168,6 +169,14 @@ export default function ReportsPage() {
                         <span className="text-sm text-muted-foreground font-normal">
                           L
                         </span>
+                      </span>
+                    </div>
+                    <div className="flex flex-col col-span-2 border-t pt-2 mt-2">
+                      <span className="text-xs text-muted-foreground uppercase font-medium">
+                        Total Expenses
+                      </span>
+                      <span className="text-xl font-bold font-mono text-destructive">
+                        ${(report.totalExpenses || 0).toLocaleString()}
                       </span>
                     </div>
                   </div>
