@@ -30,6 +30,8 @@ import {
 } from "@/components/ui/select";
 import type { Truck } from "@/types/truck.types";
 
+import { WearProgressBar } from "@/components/WearProgressBar";
+
 export function TrucksPage() {
   const navigate = useNavigate();
   const [trucks, setTrucks] = useState<Truck[]>([]);
@@ -37,6 +39,7 @@ export function TrucksPage() {
   const [error, setError] = useState<string | null>(null);
   const [view, setView] = useState<"list" | "form">("list");
   const [searchTerm, setSearchTerm] = useState("");
+  const [config, setConfig] = useState<any>({}); // Maintenance config
 
   // Form State
   const [formData, setFormData] = useState<Partial<Truck>>({
@@ -53,17 +56,21 @@ export function TrucksPage() {
   const [formLoading, setFormLoading] = useState(false);
 
   useEffect(() => {
-    fetchTrucks();
+    fetchData();
   }, []);
 
-  const fetchTrucks = async () => {
+  const fetchData = async () => {
     setLoading(true);
     try {
-      const res = await apiMethods.trucks.getAll();
-      setTrucks(res);
+      const [trucksRes, configRes] = await Promise.all([
+        apiMethods.trucks.getAll(),
+        apiMethods.maintenance.getConfig(),
+      ]);
+      setTrucks(trucksRes);
+      setConfig(configRes);
       setError(null);
     } catch (err) {
-      setError("Failed to fetch trucks");
+      setError("Failed to fetch data");
     } finally {
       setLoading(false);
     }
@@ -78,10 +85,9 @@ export function TrucksPage() {
       } else {
         await apiMethods.trucks.create(formData);
       }
-      setView("list");
       setEditingUserId(null);
       resetForm();
-      fetchTrucks();
+      fetchData();
     } catch (err: any) {
       setError(err.response?.data?.message || "Failed to save truck");
     } finally {
@@ -204,13 +210,12 @@ export function TrucksPage() {
                     </CardTitle>
                   </div>
                   <div
-                    className={`px-2 py-1 rounded-full text-xs font-medium capitalize ${
-                      truck.status === "available"
-                        ? "bg-green-100 text-green-800"
-                        : truck.status === "maintenance"
-                          ? "bg-red-100 text-red-800"
-                          : "bg-gray-100 text-gray-800"
-                    }`}
+                    className={`px-2 py-1 rounded-full text-xs font-medium capitalize ${truck.status === "available"
+                      ? "bg-green-100 text-green-800"
+                      : truck.status === "maintenance"
+                        ? "bg-red-100 text-red-800"
+                        : "bg-gray-100 text-gray-800"
+                      }`}
                   >
                     {truck.status.replace("_", " ")}
                   </div>
@@ -226,6 +231,27 @@ export function TrucksPage() {
                     <div>
                       Fuel: {truck.fuelType} ({truck.fuelCapacity}L)
                     </div>
+                  </div>
+
+                  <div className="mt-4 space-y-3">
+                    <WearProgressBar
+                      label="Oil Life"
+                      current={truck.currentMileage}
+                      target={truck.nextMaintenanceMileage}
+                      interval={config.oilChangeIntervalKm || 15000}
+                    />
+                    {/* Try to infer tire health if nextTireRotationMileage exists, 
+                         otherwise fallback or hide if property missing (though added to model) */}
+                    {/* Note: The Truck type might need update in frontend if not already there, 
+                         but standard 'any' casting or updated type helps. */}
+                    {truck.nextTireRotationMileage && (
+                      <WearProgressBar
+                        label="Tire Health"
+                        current={truck.currentMileage}
+                        target={truck.nextTireRotationMileage}
+                        interval={config.tireRotationIntervalKm || 50000}
+                      />
+                    )}
                   </div>
                   <div className="mt-4 flex gap-2">
                     <Button

@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiMethods } from "@/services/api";
-import type { MaintenanceVehicle, VehicleType } from "@/types/vehicle.types";
-import { type Truck } from "@/types/truck.types";
+import type { MaintenanceVehicle } from "@/types/vehicle.types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -16,13 +15,11 @@ import {
 } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { WearProgressBar } from "@/components/WearProgressBar";
 
 export default function MaintenancePage() {
   const navigate = useNavigate();
   const [vehicles, setVehicles] = useState<MaintenanceVehicle[]>([]);
-  const [trucks, setTrucks] = useState<Truck[]>([]); // Keep briefly for compat if needed, or remove? Plan is remove.
-  // Actually, let's just stick to vehicles.
-
   const [history, setHistory] = useState<any[]>([]);
   const [config, setConfig] = useState<any>({});
   const [view, setView] = useState<"status" | "history" | "settings">("status");
@@ -71,9 +68,9 @@ export default function MaintenancePage() {
   };
 
   useEffect(() => {
+    fetchConfig(); // Always fetch config to get intervals
     if (view === "status") fetchStatus();
     else if (view === "history") fetchHistory();
-    else if (view === "settings") fetchConfig();
   }, [view]);
 
   const handleUpdateConfig = async (e: React.FormEvent) => {
@@ -110,7 +107,9 @@ export default function MaintenancePage() {
     }
   };
 
-  if (loading) {
+
+
+  if (loading && !vehicles.length && !history.length && !config.oilChangeIntervalKm) {
     return <div className="p-8 text-center">Loading maintenance status...</div>;
   }
 
@@ -276,7 +275,7 @@ export default function MaintenancePage() {
                     <CardTitle className="text-xl">
                       {vehicle.licensePlate}
                     </CardTitle>
-                    <Badge variant="destructive" className="uppercase">
+                    <Badge variant={vehicle.status === "maintenance" ? "destructive" : "secondary"} className="uppercase">
                       {vehicle.status}
                     </Badge>
                   </div>
@@ -285,6 +284,24 @@ export default function MaintenancePage() {
                   </p>
                 </CardHeader>
                 <CardContent className="space-y-4 flex-1 flex flex-col">
+                  {/* Progress Bars Section for Trucks */}
+                  {vehicle.vehicleType === "Truck" && (
+                    <div className="space-y-3 bg-muted/30 p-3 rounded-md border border-border/50">
+                      <WearProgressBar
+                        label="Oil Life"
+                        current={vehicle.currentMileage || 0}
+                        target={vehicle.nextMaintenanceMileage || 0}
+                        interval={config.oilChangeIntervalKm || 15000}
+                      />
+                      <WearProgressBar
+                        label="Tire Health"
+                        current={vehicle.currentMileage || 0}
+                        target={vehicle.nextTireRotationMileage || 0}
+                        interval={config.tireRotationIntervalKm || 20000}
+                      />
+                    </div>
+                  )}
+
                   <div className="bg-red-950/30 border border-red-900/50 p-3 rounded-md h-32 flex flex-col gap-2">
                     <div className="flex items-center gap-2 text-red-400 font-semibold shrink-0">
                       <AlertTriangle className="h-4 w-4" />
@@ -313,7 +330,7 @@ export default function MaintenancePage() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div className="grid grid-cols-2 gap-2 text-sm mt-auto">
                     {vehicle.vehicleType === "Truck" ? (
                       <>
                         <div>
@@ -347,7 +364,7 @@ export default function MaintenancePage() {
                   </div>
 
                   <Button
-                    className="w-full mt-auto"
+                    className="w-full mt-2"
                     onClick={() => openMaintenanceModal(vehicle._id)}
                     disabled={!!processing}
                   >

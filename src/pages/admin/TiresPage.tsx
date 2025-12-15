@@ -34,6 +34,7 @@ import {
 import type { Tire } from "@/types/tire.types";
 import type { Truck } from "@/types/truck.types";
 import type { Trailer } from "@/types/trailer.types";
+import { WearProgressBar } from "@/components/WearProgressBar";
 
 export function TiresPage() {
     const navigate = useNavigate();
@@ -337,10 +338,10 @@ export function TiresPage() {
                                     </div>
                                     <div
                                         className={`px-2 py-1 rounded-full text-xs font-medium capitalize ${tire.status === "in_use"
-                                                ? "bg-green-100 text-green-800"
-                                                : tire.status === "maintenance"
-                                                    ? "bg-red-100 text-red-800"
-                                                    : "bg-gray-100 text-gray-800"
+                                            ? "bg-green-100 text-green-800"
+                                            : tire.status === "maintenance"
+                                                ? "bg-red-100 text-red-800"
+                                                : "bg-gray-100 text-gray-800"
                                             }`}
                                     >
                                         {tire.status.replace("_", " ")}
@@ -355,6 +356,16 @@ export function TiresPage() {
                                             Condition: {tire.condition}
                                         </div>
                                         <div>Tread: {tire.treadDepth} mm</div>
+                                    </div>
+
+                                    <div className="mb-3">
+                                        <WearProgressBar
+                                            label="Tread Depth"
+                                            current={tire.treadDepth}
+                                            max={12} // Assuming 12mm is standard new tread
+                                            inverse={true} // Higher is better
+                                            unit="mm"
+                                        />
                                     </div>
 
                                     {tire.assignedTo && (

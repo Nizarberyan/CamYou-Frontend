@@ -20,6 +20,7 @@ export interface Truck {
   status: "available" | "on_trip" | "maintenance" | "inactive";
   lastMaintenanceDate?: string;
   nextMaintenanceMileage?: number;
+  nextTireRotationMileage?: number;
   insuranceExpiry?: string;
   registrationExpiry?: string;
   maintenanceFlags: string[];

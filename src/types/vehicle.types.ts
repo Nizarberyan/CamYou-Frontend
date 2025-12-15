@@ -13,4 +13,5 @@ export interface MaintenanceVehicle {
     // Truck Specific
     currentMileage?: number;
     nextMaintenanceMileage?: number;
+    nextTireRotationMileage?: number;
 }
