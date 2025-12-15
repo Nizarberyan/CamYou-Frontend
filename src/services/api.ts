@@ -138,8 +138,8 @@ export const apiMethods = {
     return response.data;
   },
   maintenance: {
-    perform: async (truckId: string, notes: string) => {
-      const response = await api.post(`/maintenance/${truckId}/perform`, {
+    perform: async (vehicleId: string, notes: string) => {
+      const response = await api.post(`/maintenance/${vehicleId}/perform`, {
         notes,
       });
       return response.data;

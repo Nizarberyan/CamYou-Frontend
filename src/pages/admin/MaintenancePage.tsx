@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiMethods } from "@/services/api";
-import type { Truck } from "@/types/truck.types";
+import type { MaintenanceVehicle, VehicleType } from "@/types/vehicle.types";
+import { type Truck } from "@/types/truck.types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -18,7 +19,10 @@ import { Input } from "@/components/ui/input";
 
 export default function MaintenancePage() {
   const navigate = useNavigate();
-  const [trucks, setTrucks] = useState<Truck[]>([]);
+  const [vehicles, setVehicles] = useState<MaintenanceVehicle[]>([]);
+  const [trucks, setTrucks] = useState<Truck[]>([]); // Keep briefly for compat if needed, or remove? Plan is remove.
+  // Actually, let's just stick to vehicles.
+
   const [history, setHistory] = useState<any[]>([]);
   const [config, setConfig] = useState<any>({});
   const [view, setView] = useState<"status" | "history" | "settings">("status");
@@ -34,7 +38,7 @@ export default function MaintenancePage() {
     try {
       setLoading(true);
       const data = await apiMethods.maintenance.getStatus();
-      setTrucks(data);
+      setVehicles(data);
     } catch (error) {
       console.error("Failed to fetch maintenance status", error);
     } finally {
@@ -252,74 +256,102 @@ export default function MaintenancePage() {
       ) : null}
 
       {view === "status" &&
-        (trucks.length === 0 ? (
+        (vehicles.length === 0 ? (
           <Card className="bg-muted/50">
             <CardContent className="flex flex-col items-center justify-center p-12 text-center text-muted-foreground">
               <CheckCircle className="h-12 w-12 mb-4 text-green-500" />
               <h3 className="text-lg font-medium">All Systems Operational</h3>
-              <p>No trucks currently require maintenance.</p>
+              <p>No vehicles currently require maintenance.</p>
             </CardContent>
           </Card>
         ) : (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {trucks.map((truck) => (
+            {vehicles.map((vehicle) => (
               <Card
-                key={truck._id}
-                className="border-l-4 border-l-destructive shadow-sm"
+                key={vehicle._id}
+                className="border-l-4 border-l-destructive shadow-sm h-full flex flex-col"
               >
                 <CardHeader className="pb-2">
                   <div className="flex justify-between items-start">
                     <CardTitle className="text-xl">
-                      {truck.licensePlate}
+                      {vehicle.licensePlate}
                     </CardTitle>
                     <Badge variant="destructive" className="uppercase">
-                      {truck.status}
+                      {vehicle.status}
                     </Badge>
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    {truck.brand} {truck.vehicleModel} ({truck.year})
+                    {vehicle.brand} {vehicle.vehicleModel} ({vehicle.year})
                   </p>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="bg-red-950/30 border border-red-900/50 p-3 rounded-md space-y-2">
-                    <div className="flex items-center gap-2 text-red-400 font-semibold">
+                <CardContent className="space-y-4 flex-1 flex flex-col">
+                  <div className="bg-red-950/30 border border-red-900/50 p-3 rounded-md h-32 flex flex-col gap-2">
+                    <div className="flex items-center gap-2 text-red-400 font-semibold shrink-0">
                       <AlertTriangle className="h-4 w-4" />
                       Required Actions:
                     </div>
-                    <ul className="list-disc list-inside text-sm space-y-1 text-red-200">
-                      {truck.maintenanceFlags.map((flag, idx) => (
-                        <li key={idx}>{flag}</li>
-                      ))}
-                    </ul>
+                    <div className="overflow-y-auto custom-scrollbar flex-1 pr-1">
+                      <ul className="list-disc list-inside text-sm space-y-1 text-red-200">
+                        {(vehicle.maintenanceFlags || []).map((flag, idx) => {
+                          if (flag.startsWith("Driver Reported Issue:")) {
+                            const issue = flag.replace(
+                              "Driver Reported Issue:",
+                              "",
+                            );
+                            return (
+                              <li key={idx} className="flex flex-col gap-1">
+                                <span>Driver Reported Issue:</span>
+                                <div className="bg-red-900/40 p-2 rounded text-xs italic border-l-2 border-red-500 ml-2">
+                                  "{issue.trim()}"
+                                </div>
+                              </li>
+                            );
+                          }
+                          return <li key={idx}>{flag}</li>;
+                        })}
+                      </ul>
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-2 text-sm">
-                    <div>
-                      <span className="text-muted-foreground block">
-                        Mileage
-                      </span>
-                      <span className="font-mono">
-                        {truck.currentMileage.toLocaleString()} km
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground block">
-                        Next Service
-                      </span>
-                      <span className="font-mono">
-                        {truck.nextMaintenanceMileage?.toLocaleString() ??
-                          "N/A"}{" "}
-                        km
-                      </span>
-                    </div>
+                    {vehicle.vehicleType === "Truck" ? (
+                      <>
+                        <div>
+                          <span className="text-muted-foreground block">
+                            Mileage
+                          </span>
+                          <span className="font-mono">
+                            {vehicle.currentMileage?.toLocaleString()} km
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground block">
+                            Next Service
+                          </span>
+                          <span className="font-mono">
+                            {vehicle.nextMaintenanceMileage?.toLocaleString() ??
+                              "N/A"}{" "}
+                            km
+                          </span>
+                        </div>
+                      </>
+                    ) : (
+                      // Trailer/Other logic
+                      <div>
+                        <span className="text-muted-foreground block">Type</span>
+                        <span className="capitalize font-mono">
+                          {vehicle.vehicleModel || "Unknown"}
+                        </span>
+                      </div>
+                    )}
                   </div>
 
                   <Button
-                    className="w-full mt-4"
-                    onClick={() => openMaintenanceModal(truck._id)}
+                    className="w-full mt-auto"
+                    onClick={() => openMaintenanceModal(vehicle._id)}
                     disabled={!!processing}
                   >
-                    {processing === truck._id ? (
+                    {processing === vehicle._id ? (
                       "Processing..."
                     ) : (
                       <>
